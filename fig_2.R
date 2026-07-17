@@ -37,13 +37,14 @@ fraud_labels <- c(
 )
 
 plot_data <- combined_data %>%
-  select(all_of(fraud_columns)) %>%
-  pivot_longer(everything(), names_to = "fraud_type", values_to = "value") %>%
+  select(all_of(fraud_columns), weight) %>%
+  pivot_longer(cols = all_of(fraud_columns), names_to = "fraud_type", values_to = "value") %>%
   filter(!is.na(value)) %>%
   mutate(belief = if_else(value == 1, "Belief in Fraud", "No Belief in Fraud")) %>%
-  count(fraud_type, belief) %>%
+  group_by(fraud_type, belief) %>%
+  summarise(weighted_n = sum(weight, na.rm = TRUE), .groups = "drop") %>%
   group_by(fraud_type) %>%
-  mutate(proportion = n / sum(n)) %>%
+  mutate(proportion = weighted_n / sum(weighted_n)) %>%
   ungroup() %>%
   mutate(fraud_type = fraud_labels[fraud_type])
 
