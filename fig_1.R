@@ -5,6 +5,8 @@
 library(dplyr)
 library(gt)
 
+source("config.R")
+
 fraud_questions <- data.frame(
   question = c(
     "<strong>Multiple Voting</strong> - People voting more than once in an election",

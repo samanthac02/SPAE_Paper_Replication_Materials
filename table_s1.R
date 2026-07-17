@@ -1,5 +1,5 @@
-# Builds a gt table showing the count and proportion of missing (NA) responses 
-# for each of six voter-fraud belief questions across SPAE survey years, with 
+# Builds a gt table showing the count and proportion of missing (NA) responses
+# for each of six voter-fraud belief questions across SPAE survey years, with
 # rows for each fraud type and columns for each year.
 
 library(dplyr)
@@ -7,17 +7,19 @@ library(tidyr)
 library(gt)
 library(scales)
 
-dir <- "/Users/samantha/Desktop/SPAE/"
+source("config.R")
+
+dir <- paste0(data_dir, "/")
 
 load(paste0(dir, "COMBINED_DATA.RData"))
 
 fraud_columns <- c(
-  "Voting more than once",
-  "Ballot tampering", 
-  "Impersonation",
-  "Non-citizen voting",
-  "Mail ballot fraud",
-  "Officials changing results"
+  "voting_more_than_once",
+  "ballot_tampering",
+  "impersonation",
+  "non_citizen_voting",
+  "mail_ballot_fraud",
+  "officials_changing_results"
 )
 
 na_by_year <- combined_data %>%
@@ -31,12 +33,12 @@ na_by_year <- combined_data %>%
   )
 
 desired_order <- c(
-  "Ballot tampering", 
-  "Impersonation", 
-  "Voting more than once", 
-  "Mail ballot fraud", 
-  "Non-citizen voting", 
-  "Officials changing results"
+  "ballot_tampering",
+  "impersonation",
+  "voting_more_than_once",
+  "mail_ballot_fraud",
+  "non_citizen_voting",
+  "officials_changing_results"
 )
 
 na_combined <- na_by_year %>%
@@ -44,12 +46,12 @@ na_combined <- na_by_year %>%
   arrange(Question) %>%
   mutate(
     html_count = paste0(
-      "<span style='display: inline-block; width: 50px; text-align: right;'>", 
-      scales::comma(na_count, accuracy = 1), 
+      "<span style='display: inline-block; width: 50px; text-align: right;'>",
+      scales::comma(na_count, accuracy = 1),
       "</span>"
     ),
     html_prop = paste0(
-      "<span style='display: inline-block; width: 65px; text-align: right; margin-left: 10px;'>", 
+      "<span style='display: inline-block; width: 65px; text-align: right; margin-left: 10px;'>",
       "(", scales::percent(na_prop, accuracy = 0.1), ")",
       "</span>"
     ),

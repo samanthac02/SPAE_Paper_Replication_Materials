@@ -9,37 +9,51 @@ library(tidyr)
 library(survey)
 library(haven)
 
-load("/Users/samantha/Desktop/SPAE/COMBINED_DATA.RData")
+source("config.R")
+
+load(paste0(data_dir, "/COMBINED_DATA.RData"))
 
 combined_data$year <- as.numeric(as.character(combined_data$year))
 
 fraud_columns <- c(
-  "Voting more than once",
-  "Ballot tampering",
-  "Impersonation",
-  "Non-citizen voting",
-  "Mail ballot fraud",
-  "Officials changing results"
+  "voting_more_than_once",
+  "ballot_tampering",
+  "impersonation",
+  "non_citizen_voting",
+  "mail_ballot_fraud",
+  "officials_changing_results"
 )
 
-confidence_col <- "Confidence"
+confidence_col <- "confidence"
+
+fraud_labels <- c(
+  "voting_more_than_once"      = "Voting More Than Once",
+  "ballot_tampering"           = "Ballot Tampering",
+  "impersonation"              = "Impersonation",
+  "non_citizen_voting"         = "Non-Citizen Voting",
+  "mail_ballot_fraud"          = "Mail Ballot Fraud",
+  "officials_changing_results" = "Officials Changing Results",
+  "not_confident_vote_counted" = "Not Confident Vote Counted"
+)
 
 desired_order <- c(
-  "Mail ballot fraud",
-  "Non-citizen voting",
-  "Officials changing results",
-  "Ballot tampering",
+  "Mail Ballot Fraud",
+  "Non-Citizen Voting",
+  "Officials Changing Results",
+  "Ballot Tampering",
   "Impersonation",
-  "Voting more than once",
-  "Not confident vote counted"
+  "Voting More Than Once",
+  "Not Confident Vote Counted"
 )
 
-dk_values <- c("DON'T KNOW", "I DON'T KNOW", "I DON\u2019T KNOW")  # \u2019 = curly '
+cols_not_in_2008 <- c("non_citizen_voting", "mail_ballot_fraud", "officials_changing_results")
+
+dk_values <- c("DON'T KNOW", "I DON'T KNOW", "I DON’T KNOW")
 
 combined_data <- combined_data %>%
   mutate(
     .conf_raw = toupper(trimws(as.character(.data[[confidence_col]]))),
-    `Not confident vote counted` = case_when(
+    not_confident_vote_counted = case_when(
       .conf_raw %in% c("NOT TOO CONFIDENT", "NOT AT ALL CONFIDENT") ~ 1,
       .conf_raw %in% c("VERY CONFIDENT", "SOMEWHAT CONFIDENT")     ~ 0,
       .conf_raw %in% dk_values                                     ~ NA_real_,
@@ -48,56 +62,66 @@ combined_data <- combined_data %>%
   ) %>%
   select(-.conf_raw)
 
-all_outcome_columns <- c(fraud_columns, "Not confident vote counted")
+all_outcome_columns <- c(fraud_columns, "not_confident_vote_counted")
 
-
-
-proportions_table <- combined_data %>%
+analysis_data <- combined_data %>%
   filter(
     year %in% c(2008, 2012, 2014, 2016, 2020, 2022, 2024),
-    party3 %in% c("DEMOCRAT", "REPUBLICAN")
+    party %in% c("DEMOCRAT", "REPUBLICAN")
   ) %>%
   mutate(
-    party = case_when(
-      party3 == "DEMOCRAT" ~ "Democrat",
-      party3 == "REPUBLICAN" ~ "Republican"
+    party_label = case_when(
+      party == "DEMOCRAT" ~ "Democrat",
+      party == "REPUBLICAN" ~ "Republican"
     )
-  ) %>%
-  pivot_longer(
-    cols = all_of(all_outcome_columns),
-    names_to = "fraud_type",
-    values_to = "believes_common"
-  ) %>%
-  filter(!is.na(believes_common)) %>%
-  group_by(year, fraud_type, party) %>%
-  summarise(
-    n_total = n(),
-    n_common = sum(believes_common == 1),
-    proportion_common = round(n_common / n_total, 3),
-    percentage_common = round((n_common / n_total) * 100, 1),
-    .groups = "drop"
   )
 
-# --- STEP 4: PREPARE PLOT DATA ---
-plot_data <- proportions_table %>%
-  mutate(
-    std_error = sqrt((proportion_common * (1 - proportion_common)) / n_total),
-    ci_lower = pmax(0, proportion_common - 1.96 * std_error),
-    ci_upper = pmin(1, proportion_common + 1.96 * std_error),
-    percentage = proportion_common * 100,
-    ci_lower_pct = ci_lower * 100,
-    ci_upper_pct = ci_upper * 100
-  ) %>%
-  mutate(fraud_type = factor(fraud_type, levels = desired_order))
+results_list <- list()
 
-# --- STEP 5: CREATE PLOT ---
-p <- ggplot(plot_data, aes(x = factor(year), y = percentage, color = party, fill = party)) +
+for (yr in sort(unique(analysis_data$year))) {
+  yr_data <- analysis_data %>% filter(year == yr)
+  svy <- svydesign(ids = ~1, weights = ~weight, data = yr_data)
+
+  yr_outcomes <- if (yr == 2008) setdiff(all_outcome_columns, cols_not_in_2008) else all_outcome_columns
+  for (col in yr_outcomes) {
+    tryCatch({
+      by_party <- svyby(
+        as.formula(paste0("~", col)),
+        ~party_label,
+        svy,
+        svymean,
+        na.rm = TRUE
+      )
+
+      results_list[[length(results_list) + 1]] <- data.frame(
+        year = yr,
+        fraud_type = col,
+        party_label = by_party$party_label,
+        proportion = by_party[[col]],
+        std_error = as.numeric(SE(by_party)),
+        stringsAsFactors = FALSE
+      )
+    }, error = function(e) NULL)
+  }
+}
+
+plot_data <- bind_rows(results_list) %>%
+  mutate(
+    ci_lower = pmax(0, proportion - 1.96 * std_error),
+    ci_upper = pmin(1, proportion + 1.96 * std_error),
+    percentage = proportion * 100,
+    ci_lower_pct = ci_lower * 100,
+    ci_upper_pct = ci_upper * 100,
+    fraud_type = factor(fraud_labels[fraud_type], levels = desired_order)
+  )
+
+p <- ggplot(plot_data, aes(x = factor(year), y = percentage, color = party_label, fill = party_label)) +
   geom_ribbon(
-    aes(ymin = ci_lower_pct, ymax = ci_upper_pct, group = party),
+    aes(ymin = ci_lower_pct, ymax = ci_upper_pct, group = party_label),
     alpha = 0.2,
     color = NA
   ) +
-  geom_line(aes(group = party), linewidth = 1.2) +
+  geom_line(aes(group = party_label), linewidth = 1.2) +
   geom_point(size = 2.5) +
   scale_color_manual(
     values = c("Democrat" = "#1f77b4", "Republican" = "#d62728")
@@ -129,3 +153,4 @@ p <- ggplot(plot_data, aes(x = factor(year), y = percentage, color = party, fill
   )
 
 print(p)
+ggsave(file.path(figures_dir, "fig_3.png"), p, width = 12, height = 8, dpi = 300)

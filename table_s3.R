@@ -1,6 +1,6 @@
-# Builds a gt table cross-tabulating respondents' confidence in election 
-# administration against the number of fraud types (0–6) they believe are common, 
-# with rows for each confidence level (Not at all → Very confident) and columns 
+# Builds a gt table cross-tabulating respondents' confidence in election
+# administration against the number of fraud types (0–6) they believe are common,
+# with rows for each confidence level (Not at all → Very confident) and columns
 # showing counts for each possible fraud-belief total.
 
 library(dplyr)
@@ -8,22 +8,24 @@ library(tidyr)
 library(haven)
 library(gt)
 
-load("/Users/samantha/Desktop/SPAE/COMBINED_DATA.RData")
+source("config.R")
+
+load(paste0(data_dir, "/COMBINED_DATA.RData"))
 
 combined_data <- combined_data %>%
   mutate(
     fraud_count = rowSums(
-      across(c(`Voting more than once`, `Ballot tampering`, `Impersonation`,
-               `Non-citizen voting`, `Mail ballot fraud`, `Officials changing results`),
+      across(c(voting_more_than_once, ballot_tampering, impersonation,
+               non_citizen_voting, mail_ballot_fraud, officials_changing_results),
              ~ as.numeric(.) == 1),
       na.rm = TRUE
     ),
     fraud_any_na = rowSums(
-      across(c(`Voting more than once`, `Ballot tampering`, `Impersonation`,
-               `Non-citizen voting`, `Mail ballot fraud`, `Officials changing results`),
+      across(c(voting_more_than_once, ballot_tampering, impersonation,
+               non_citizen_voting, mail_ballot_fraud, officials_changing_results),
              ~ is.na(.))
     ),
-    confidence_lbl = as.character(haven::as_factor(Confidence))
+    confidence_lbl = as.character(haven::as_factor(confidence))
   )
 
 table_data <- combined_data %>%

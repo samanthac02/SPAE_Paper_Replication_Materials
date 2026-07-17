@@ -12,7 +12,9 @@ library(gt)
 library(haven)
 library(purrr)
 
-load("/Users/samantha/Desktop/SPAE/spae_2008.RData")
+source("config.R")
+
+load(paste0(data_dir, "/spae_2008.RData"))
 
 spae_2008 <- data %>%
   mutate(across(where(is.labelled), as_factor)) %>%
@@ -118,7 +120,7 @@ run_model <- function(outcome) {
       outcome,
       " ~ phone + female + black + hisp + asian + other_r +
         somecol + hsgrad + fouryear + postgrad + nohs +
-        rep + dem + ind + birthyr"
+        rep + dem + birthyr"
     )
   )
   
@@ -153,11 +155,9 @@ label_dict <- c(
   "nohs" = "No HS",
   "rep" = "Republican",
   "dem" = "Democrat",
-  "ind" = "Independent",
   "birthyr" = "Birth year"
 )
 
-# order of predictors
 custom_order <- c(
   "(Intercept)",
   "phone",
@@ -173,7 +173,6 @@ custom_order <- c(
   "nohs",
   "rep",
   "dem",
-  "ind",
   "birthyr"
 )
 

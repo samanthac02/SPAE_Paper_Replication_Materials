@@ -158,8 +158,8 @@ for (key in names(column_mapping)) {
     mutate(across(all_of(fraud_columns), ~ case_when(
       . %in% c("IT IS VERY COMMON", "IT OCCURS OCCASIONALLY", "IT OCCURS FREQUENTLY") ~ 1,
       . %in% c("IT OCCURS INFREQUENTLY", "IT ALMOST NEVER OCCURS") ~ 0,
-      . %in% c(1, 2) ~ 1,
-      . %in% c(3, 4) ~ 0,
+      . %in% c(1, 2, 3) ~ 1,
+      . %in% c(4) ~ 0,
       . == 9 ~ NA_real_,
       TRUE ~ NA_real_
     )))
@@ -235,4 +235,4 @@ combined_data <- do.call(rbind, datasets)
 combined_data <- combined_data %>%
   filter(!if_all(all_of(fraud_columns), is.na))
 
-save(combined_data, file = paste0(dir, "COMBINED_DATA.RData"))
+save(combined_data, file = paste0(dir, "COMBINED_DATA_ALT.RData"))

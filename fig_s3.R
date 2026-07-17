@@ -8,15 +8,17 @@ library(tidyr)
 library(ggplot2)
 library(broom)
 
-load("/Users/samantha/Desktop/SPAE/COMBINED_DATA.RData")
+source("config.R")
+
+load(paste0(data_dir, "/COMBINED_DATA.RData"))
 
 fraud_cols <- c(
-  "Voting more than once", 
-  "Ballot tampering", 
-  "Impersonation", 
-  "Non-citizen voting", 
-  "Mail ballot fraud", 
-  "Officials changing results"
+  "voting_more_than_once",
+  "ballot_tampering",
+  "impersonation",
+  "non_citizen_voting",
+  "mail_ballot_fraud",
+  "officials_changing_results"
 )
 
 binary_data <- combined_data %>%
@@ -33,19 +35,20 @@ loadings_df <- as.data.frame(pca_result$rotation)
 loadings_df$variable <- rownames(loadings_df)
 scores_df <- as.data.frame(pca_result$x)
 
-print(
-  ggplot(loadings_df, aes(x = PC1, y = PC2, label = variable)) +
-    geom_segment(aes(xend = PC1, yend = PC2), x = 0, y = 0, 
-                 arrow = arrow(length = unit(0.2, "cm")), color = "darkred") +
-    geom_text(vjust = -0.5, hjust = 0.5, size = 4, color = "black") +
-    geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.5) +
-    geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.5) +
-    xlim(-1, 1) + ylim(-1, 1) +
-    coord_fixed() +
-    labs(
-      title = "PCA Decomposition of Fraud Beliefs",
-      x = "PC1",
-      y = "PC2",
-    ) +
-    theme_minimal()
-)
+p <- ggplot(loadings_df, aes(x = PC1, y = PC2, label = variable)) +
+  geom_segment(aes(xend = PC1, yend = PC2), x = 0, y = 0,
+               arrow = arrow(length = unit(0.2, "cm")), color = "darkred") +
+  geom_text(vjust = -0.5, hjust = 0.5, size = 4, color = "black") +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.5) +
+  geom_vline(xintercept = 0, linetype = "dashed", alpha = 0.5) +
+  xlim(-1, 1) + ylim(-1, 1) +
+  coord_fixed() +
+  labs(
+    title = "PCA Decomposition of Fraud Beliefs",
+    x = "PC1",
+    y = "PC2",
+  ) +
+  theme_minimal()
+
+print(p)
+ggsave(file.path(figures_dir, "fig_s3.png"), p, width = 8, height = 8, dpi = 300)

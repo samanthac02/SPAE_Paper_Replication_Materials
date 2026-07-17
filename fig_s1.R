@@ -1,17 +1,19 @@
-# Computes and visualizes the pairwise correlation matrix of all numeric 
-# survey variables (excluding caseid, year, and weight) from the SPAE data, 
-# with renamed fraud-question columns and an upper-triangle corrplot using a 
+# Computes and visualizes the pairwise correlation matrix of all numeric
+# survey variables (excluding caseid, year, and weight) from the SPAE data,
+# with renamed fraud-question columns and an upper-triangle corrplot using a
 # yellow-green-blue color gradient.
 
-load("/Users/samantha/Desktop/SPAE/COMBINED_DATA.RData")
+source("config.R")
+
+load(paste0(data_dir, "/COMBINED_DATA.RData"))
 df <- combined_data
 
-colnames(df) <- gsub("VF: multiple voting", "Multiple Voting", colnames(df))
-colnames(df) <- gsub("VF: ballot tampering", "Ballot Tampering", colnames(df))
-colnames(df) <- gsub("VF: impersonation", "Impersonation", colnames(df))
-colnames(df) <- gsub("VF: non-citizen voting", "Non-citizen Voting", colnames(df))
-colnames(df) <- gsub("VF: mail ballot fraud", "Mail Ballot Fraud", colnames(df))
-colnames(df) <- gsub("VF: official tampering", "Official Tampering", colnames(df))
+colnames(df) <- gsub("voting_more_than_once", "Multiple Voting", colnames(df))
+colnames(df) <- gsub("ballot_tampering", "Ballot Tampering", colnames(df))
+colnames(df) <- gsub("impersonation", "Impersonation", colnames(df))
+colnames(df) <- gsub("non_citizen_voting", "Non-citizen Voting", colnames(df))
+colnames(df) <- gsub("mail_ballot_fraud", "Mail Ballot Fraud", colnames(df))
+colnames(df) <- gsub("officials_changing_results", "Official Tampering", colnames(df))
 
 num_vars <- df[sapply(df, is.numeric)]
 num_vars <- subset(num_vars, select = -caseid)

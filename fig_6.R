@@ -9,37 +9,39 @@ library(survey)
 library(marginaleffects)
 library(haven)
 
-load(file.choose()) # choose COMBINED_DATA.RData
+source("config.R")
+
+load(paste0(data_dir, "/COMBINED_DATA.RData"))
  
 fraud_cols <- c(
-  "Voting more than once",
-  "Ballot tampering", 
-  "Impersonation", 
-  "Non-citizen voting", 
-  "Mail ballot fraud", 
-  "Officials changing results"
+  "voting_more_than_once",
+  "ballot_tampering",
+  "impersonation",
+  "non_citizen_voting",
+  "mail_ballot_fraud",
+  "officials_changing_results"
 )
 
 fraud_labels_all_years <- c(
-  "Voting more than once"      = "Voting more than once",
-  "Ballot tampering"           = "Ballot tampering",
-  "Impersonation"              = "Impersonation",
-  "Non-citizen voting"         = "Non-citizen voting",
-  "Mail ballot fraud"          = "Mail ballot fraud",
-  "Officials changing results" = "Officials changing results"
+  "voting_more_than_once"      = "Voting more than once",
+  "ballot_tampering"           = "Ballot tampering",
+  "impersonation"              = "Impersonation",
+  "non_citizen_voting"         = "Non-citizen voting",
+  "mail_ballot_fraud"          = "Mail ballot fraud",
+  "officials_changing_results" = "Officials changing results"
 )
 
 desired_order <- c(
-  "Ballot tampering", 
-  "Impersonation", 
-  "Voting more than once", 
-  "Mail ballot fraud", 
-  "Non-citizen voting", 
+  "Ballot tampering",
+  "Impersonation",
+  "Voting more than once",
+  "Mail ballot fraud",
+  "Non-citizen voting",
   "Officials changing results"
 )
 
 run_swing_state_logit <- function(data, swing_state_codes, fraud_cols) {
-  keep <- c("state", "party3", "weight", fraud_cols)
+  keep <- c("state", "party", "weight", fraud_cols)
   
   selected_data <- data %>%
     select(all_of(keep)) %>%
@@ -81,11 +83,7 @@ run_swing_state_logit <- function(data, swing_state_codes, fraud_cols) {
       meffects_df <- as.data.frame(meffects)
       
       meffects_df$dependent_variable <- dep_var
-      
-      if (is.na(meffects_df$std.error[1])) {
-        meffects_df$std.error[1] <- 0.1
-      }
-      
+
       return(meffects_df)
       
     }, error = function(e) {
@@ -110,21 +108,12 @@ run_swing_state_logit <- function(data, swing_state_codes, fraud_cols) {
             std.error = sqrt(mean(std.error^2, na.rm = TRUE)),
             .groups = "drop"
           )
-        
-        if (is.na(result$std.error[1]) || result$std.error[1] == 0) {
-          result$std.error[1] <- 0.1
-        }
-        
+
         return(result)
-        
+
       }, error = function(e2) {
-        cat("Both models failed for", dep_var, "- creating dummy result\n")
-        return(tibble(
-          term = "swing_states",
-          estimate = 0,
-          std.error = 0.1,
-          dependent_variable = dep_var
-        ))
+        cat("Both models failed for", dep_var, "- skipping\n")
+        return(NULL)
       })
     })
   })
@@ -147,8 +136,7 @@ plot_swingstate_effects <- function(all_mfx_summaries, survey_years, fraud_label
       survey_year = factor(survey_year, levels = survey_years),
       fraud_label = fraud_labels_all_years[as.character(dependent_variable)]
     ) %>%
-    filter(!is.na(estimate), !is.na(fraud_label)) %>%
-    mutate(std.error = ifelse(is.na(std.error) | std.error == 0, 0.01, std.error)) %>%
+    filter(!is.na(estimate), !is.na(std.error), !is.na(fraud_label)) %>%
     distinct(survey_year, fraud_label, term, .keep_all = TRUE) %>%
     mutate(fraud_label = factor(fraud_label, levels = panel_order))
   
@@ -191,7 +179,6 @@ plot_swingstate_effects <- function(all_mfx_summaries, survey_years, fraud_label
 
 swing_by_year <- list(
   "2008" = c("FLORIDA", "MINNESOTA", "MISSOURI", "INDIANA", "NORTH CAROLINA"),
-  "2009" = c("FLORIDA", "MINNESOTA", "MISSOURI", "INDIANA", "NORTH CAROLINA"),
   "2012" = c("FLORIDA", "NORTH CAROLINA", "OHIO"),
   "2014" = c("FLORIDA", "NORTH CAROLINA", "OHIO"),
   "2016" = c("FLORIDA", "IOWA", "MICHIGAN", "MINNESOTA", "NEVADA", "NEW HAMPSHIRE", "PENNSYLVANIA", "WISCONSIN"),
@@ -232,6 +219,7 @@ swing_plot <- plot_swingstate_effects(all_swing_summaries, as.character(survey_y
 
 if (!is.null(swing_plot)) {
   print(swing_plot)
+  ggsave(file.path(figures_dir, "fig_6.png"), swing_plot, width = 12, height = 8, dpi = 300)
   cat("Swing state plot created successfully!\n")
 } else {
   cat("Swing state plot creation failed - no data to plot.\n")

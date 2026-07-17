@@ -1,22 +1,24 @@
-# Builds a gt table summarizing SPAE sample demographics (gender, age group, 
-# education, party, ideology) with both unweighted and survey-weighted 
+# Builds a gt table summarizing SPAE sample demographics (gender, age group,
+# education, party, ideology) with both unweighted and survey-weighted
 # percentages, grouped by demographic category with one row per level.
 
 library(dplyr)
 library(tidyr)
 library(gt)
 
-dir <- "/Users/samantha/Desktop/SPAE/"
+source("config.R")
+
+dir <- paste0(data_dir, "/")
 load(paste0(dir, "COMBINED_DATA.RData"))
 
 demo <- combined_data %>%
   mutate(
-    `birth year` = suppressWarnings(as.numeric(`birth year`)),
-    age = year - `birth year`,
+    birth_year = suppressWarnings(as.numeric(birth_year)),
+    age = year - birth_year,
     age_group = case_when(
-      age >= 18 & age <= 29 ~ "18\u201329",
-      age >= 30 & age <= 44 ~ "30\u201344",
-      age >= 45 & age <= 64 ~ "45\u201364",
+      age >= 18 & age <= 29 ~ "18–29",
+      age >= 30 & age <= 44 ~ "30–44",
+      age >= 45 & age <= 64 ~ "45–64",
       age >= 65            ~ "65+",
       TRUE ~ NA_character_
     ),
@@ -35,9 +37,9 @@ demo <- combined_data %>%
       TRUE ~ NA_character_
     ),
     party_clean = case_when(
-      toupper(as.character(party3)) == "DEMOCRAT"    ~ "Democrat",
-      toupper(as.character(party3)) == "INDEPENDENT" ~ "Independent",
-      toupper(as.character(party3)) == "REPUBLICAN"  ~ "Republican",
+      toupper(as.character(party)) == "DEMOCRAT"    ~ "Democrat",
+      toupper(as.character(party)) == "INDEPENDENT" ~ "Independent",
+      toupper(as.character(party)) == "REPUBLICAN"  ~ "Republican",
       TRUE ~ NA_character_
     ),
     ideo_clean = case_when(
@@ -76,7 +78,7 @@ gender_tbl <- get_pct(demo, "gender_clean",
   mutate(section = "Gender")
 
 age_tbl <- get_pct(demo, "age_group",
-                   c("18\u201329", "30\u201344", "45\u201364", "65+")) %>%
+                   c("18–29", "30–44", "45–64", "65+")) %>%
   mutate(section = "Age Group")
 
 educ_tbl <- get_pct(demo, "educ_clean",

@@ -9,11 +9,13 @@ library(ggplot2)
 library(broom)
 library(gt)
 
-load("/Users/samantha/Desktop/SPAE/COMBINED_DATA.RData")
+source("config.R")
 
-confidence_var <- "Confidence"
-fraud_cols <- c("Voting more than once", "Ballot tampering", "Impersonation", 
-                "Non-citizen voting", "Mail ballot fraud", "Officials changing results")
+load(paste0(data_dir, "/COMBINED_DATA.RData"))
+
+confidence_var <- "confidence"
+fraud_cols <- c("voting_more_than_once", "ballot_tampering", "impersonation",
+                "non_citizen_voting", "mail_ballot_fraud", "officials_changing_results")
 
 analysis_data <- combined_data %>%
   filter(year >= 2012) %>%
@@ -71,3 +73,4 @@ plot <- ggplot(plot_data, aes(x = .data[[confidence_var]], y = factor(fraud_coun
   )
 
 print(plot)
+ggsave(file.path(figures_dir, "fig_s5.png"), plot, width = 10, height = 6, dpi = 300)
