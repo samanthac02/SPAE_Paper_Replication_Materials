@@ -80,16 +80,17 @@ data_2024 <- combined_data %>%
 
 # Reshape data
 fraud_long_2024 <- data_2024 %>%
-  select(all_of(fraud_columns), party_label, gender, race, education, age_group) %>%
+  select(all_of(fraud_columns), party_label, gender, race, education, age_group, weight) %>%
   pivot_longer(cols = all_of(fraud_columns), names_to = "fraud_type", values_to = "belief") %>%
   filter(!is.na(belief)) %>%
   mutate(fraud_type = fraud_labels[fraud_type])
 
 p <- fraud_long_2024 %>%
   filter(party_label %in% c("Democrat", "Republican", "Independent")) %>%
-  count(fraud_type, party_label, belief) %>%
+  group_by(fraud_type, party_label, belief) %>%
+  summarise(weighted_n = sum(weight, na.rm = TRUE), .groups = "drop") %>%
   group_by(fraud_type, party_label) %>%
-  mutate(percentage = n / sum(n)) %>%
+  mutate(percentage = weighted_n / sum(weighted_n)) %>%
   ggplot(aes(y = party_label, x = percentage, fill = belief)) +
   geom_col(position = "stack") +
   geom_text(
