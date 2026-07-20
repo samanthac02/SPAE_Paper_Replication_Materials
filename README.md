@@ -10,13 +10,27 @@ Install the following R packages:
 install.packages(c(
   "here", "dplyr", "tidyr", "ggplot2", "gt", "survey",
   "haven", "broom", "purrr", "scales", "stringr",
-  "corrplot", "mirt", "marginaleffects"
+  "corrplot", "mirt", "marginaleffects", "webshot2"
 ))
 ```
 
 ## How to Run
 
 Scripts must be run from the project root directory (where this README lives).
+
+### Quick Start
+
+To generate everything at once, run `orchestrator.R`. It sources the configuration, builds the combined dataset, and runs all figure, table, and model scripts in sequence:
+
+```r
+source("orchestrator.R")
+```
+
+When complete, it prints the directory path where all figures are saved.
+
+### Running Scripts Individually
+
+If you prefer to run scripts one at a time, follow the steps below.
 
 ### Step 1: Configuration
 

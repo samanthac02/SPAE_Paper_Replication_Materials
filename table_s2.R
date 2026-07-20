@@ -116,3 +116,4 @@ demo_gt <- demo_tbl %>%
   )
 
 print(demo_gt)
+gtsave(demo_gt, file.path(figures_dir, "table_s2.png"))

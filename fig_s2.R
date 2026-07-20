@@ -156,3 +156,4 @@ run_irt_regression <- function(target_year) {
 
 final_table <- run_irt_regression(2024)
 print(final_table)
+gtsave(final_table, file.path(figures_dir, "fig_s2.png"))

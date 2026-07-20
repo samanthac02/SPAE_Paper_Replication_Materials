@@ -56,7 +56,7 @@ checkbox_data <- fraud_questions %>%
   select(-years_asked) %>%
   ungroup()
 
-print(checkbox_data %>%
+fig_1_table <- checkbox_data %>%
   gt() %>%
   tab_header(
     title = "Election Fraud Frequency Questions",
@@ -89,4 +89,7 @@ print(checkbox_data %>%
     ),
     locations = cells_column_labels(columns = -question)
   ) %>%
-  fmt_markdown(columns = question))
+  fmt_markdown(columns = question)
+
+print(fig_1_table)
+gtsave(fig_1_table, file.path(figures_dir, "fig_1.png"))

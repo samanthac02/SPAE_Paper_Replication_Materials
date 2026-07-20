@@ -229,3 +229,4 @@ table <- wide_table %>%
   )
 
 print(table)
+gtsave(table, file.path(figures_dir, "SM_logit_table_2008.png"))

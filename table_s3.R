@@ -62,3 +62,4 @@ gt_table <- table_data %>%
               heading.title.font.size = 18)
 
 print(gt_table)
+gtsave(gt_table, file.path(figures_dir, "table_s3.png"))

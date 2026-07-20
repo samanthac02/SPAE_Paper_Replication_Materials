@@ -30,3 +30,11 @@ corrplot(cor_matrix, method = "color", type = "upper",
          addCoef.col = "black", number.cex = 0.8,
          col = corr_colors,
          cl.lim = c(-1, 1))
+
+png(file.path(figures_dir, "fig_s1.png"), width = 10, height = 10, units = "in", res = 300)
+corrplot(cor_matrix, method = "color", type = "upper",
+         tl.col = "black", tl.srt = 45,
+         addCoef.col = "black", number.cex = 0.8,
+         col = corr_colors,
+         cl.lim = c(-1, 1))
+dev.off()

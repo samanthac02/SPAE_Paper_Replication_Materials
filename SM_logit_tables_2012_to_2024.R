@@ -72,6 +72,15 @@ fraud_columns <- c(
   "officials_changing_results"
 )
 
+fraud_labels <- c(
+  "voting_more_than_once"      = "Voting More Than Once",
+  "ballot_tampering"           = "Ballot Tampering",
+  "impersonation"              = "Impersonation",
+  "non_citizen_voting"         = "Non-Citizen Voting",
+  "mail_ballot_fraud"          = "Mail Ballot Fraud",
+  "officials_changing_results" = "Officials Changing Results"
+)
+
 run_year_logit <- function(target_year, outcomes = fraud_columns) {
 
   data_year <- combined_data %>%
@@ -142,7 +151,10 @@ run_year_logit <- function(target_year, outcomes = fraud_columns) {
       Estimate = round(estimate, 3),
       `Std. Error` = round(std.error, 3)
     ) %>%
-    select(label, model, Estimate, `Std. Error`)
+    select(label, model, Estimate, `Std. Error`) %>%
+    mutate(model = fraud_labels[model])
+
+  valid_outcomes <- fraud_labels[valid_outcomes]
 
   build_gt_half <- function(outcomes_subset, title_text) {
     wide_half <- long_data %>%
@@ -187,6 +199,11 @@ run_year_logit <- function(target_year, outcomes = fraud_columns) {
 
   print(gt_top)
   print(gt_bottom)
+
+  gtsave(gt_top, file.path(figures_dir, paste0("SM_logit_table_", target_year, "_top.png")))
+  gtsave(gt_bottom, file.path(figures_dir, paste0("SM_logit_table_", target_year, "_bottom.png")))
 }
 
-tables <- run_year_logit(2012)
+for (yr in c(2012, 2014, 2016, 2020, 2022, 2024)) {
+  run_year_logit(yr)
+}

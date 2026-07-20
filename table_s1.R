@@ -22,6 +22,15 @@ fraud_columns <- c(
   "officials_changing_results"
 )
 
+fraud_labels <- c(
+  "voting_more_than_once"      = "Voting More Than Once",
+  "ballot_tampering"           = "Ballot Tampering",
+  "impersonation"              = "Impersonation",
+  "non_citizen_voting"         = "Non-Citizen Voting",
+  "mail_ballot_fraud"          = "Mail Ballot Fraud",
+  "officials_changing_results" = "Officials Changing Results"
+)
+
 na_by_year <- combined_data %>%
   pivot_longer(cols = all_of(fraud_columns), names_to = "Question", values_to = "response") %>%
   group_by(year, Question) %>%
@@ -33,15 +42,16 @@ na_by_year <- combined_data %>%
   )
 
 desired_order <- c(
-  "ballot_tampering",
-  "impersonation",
-  "voting_more_than_once",
-  "mail_ballot_fraud",
-  "non_citizen_voting",
-  "officials_changing_results"
+  "Ballot Tampering",
+  "Impersonation",
+  "Voting More Than Once",
+  "Mail Ballot Fraud",
+  "Non-Citizen Voting",
+  "Officials Changing Results"
 )
 
 na_combined <- na_by_year %>%
+  mutate(Question = fraud_labels[Question]) %>%
   mutate(Question = factor(Question, levels = desired_order)) %>%
   arrange(Question) %>%
   mutate(
@@ -63,8 +73,7 @@ na_combined <- na_by_year %>%
     values_from = combined_val
   )
 
-print(
-  gt(na_combined) %>%
+table_s1 <- gt(na_combined) %>%
     tab_header(
       title = "Excluded Data for Election Fraud Belief Questions"
     ) %>%
@@ -89,4 +98,6 @@ print(
       align = "center",
       columns = -Question
     )
-)
+
+print(table_s1)
+gtsave(table_s1, file.path(figures_dir, "table_s1.png"))
